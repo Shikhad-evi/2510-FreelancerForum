@@ -1,0 +1,38 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#app {
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: 1ch;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1ch;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+  text-align: left;
+  border: 2px solid black;
+  border-collapse: collapse;
+}
+
+thead {
+  border-bottom: 2px solid black;
+  text-transform: uppercase;
+}
+
+th,
+td {
+  border: 1px dashed #aaa;
+  padding: 0.5ch;
+}
+
+tbody tr:nth-child(odd) {
+  background: #f0f0f0;
+}

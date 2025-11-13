@@ -5,211 +5,93 @@
  * @property {number} rate
  */
 
-// Constants
-const NAMES = ["Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry"];
-const OCCUPATIONS = ["Writer", "Teacher", "Programmer", "Designer", "Consultant", "Tutor"];
-const MIN_RATE = 30;
-const MAX_RATE = 100;
-const NUM_FREELANCERS = 5;
+// === Constants ===
+const NAMES = ["Alice", "Bob", "Carol", "Dave", "Eve"];
+const OCCUPATIONS = ["Writer", "Teacher", "Programmer", "Designer", "Engineer"];
+const PRICE_RANGE = { min: 20, max: 200 };
+const NUM_FREELANCERS = 100;
 
-// Function to generate random freelancer
-function generateFreelancer() {
-    const randomName = NAMES[Math.floor(Math.random() * NAMES.length)];
-    const randomOccupation = OCCUPATIONS[Math.floor(Math.random() * OCCUPATIONS.length)];
-    const randomRate = Math.floor(Math.random() * (MAX_RATE - MIN_RATE + 1)) + MIN_RATE;
-    
-    return {
-        name: randomName,
-        occupation: randomOccupation,
-        rate: randomRate
-    };
+// === State ===
+const freelancers = Array.from({ length: NUM_FREELANCERS }, makeFreelancer);
+const averageRate = getAverageRate();
+
+/** @returns {Freelancer} a freelancer with random name, occupation, and rate */
+function makeFreelancer() {
+  const name = sample(NAMES);
+  const occupation = sample(OCCUPATIONS);
+  const rate =
+    PRICE_RANGE.min +
+    Math.floor(Math.random() * (PRICE_RANGE.max - PRICE_RANGE.min));
+
+  return { name, occupation, rate };
 }
 
-// Initialize state
-let freelancers = Array.from({ length: NUM_FREELANCERS }, generateFreelancer);
-
-// Function to calculate average rate
-function calculateAverageRate() {
-    if (freelancers.length === 0) return 0;
-    
-    const total = freelancers.reduce((sum, freelancer) => sum + freelancer.rate, 0);
-    return (total / freelancers.length).toFixed(2);
+/** @returns {number} the average rate of all `freelancers` */
+function getAverageRate() {
+  const total = freelancers.reduce(
+    (total, freelancer) => total + freelancer.rate,
+    0
+  );
+  return total / freelancers.length;
 }
 
-// Initialize average rate state
-let averageRate = calculateAverageRate();
-
-// Component for single freelancer
-function Freelancer({ name, occupation, rate }) {
-    const freelancerElement = document.createElement('tr');
-    freelancerElement.className = 'freelancer';
-    freelancerElement.innerHTML = `
-        <td class="name">${name}</td>
-        <td class="occupation">${occupation}</td>
-        <td class="rate">$${rate}/hr</td>
-    `;
-    return freelancerElement;
+/** @returns a single element randomly from the given array */
+function sample(array) {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
-// Component for freelancers array
+// === Components ===
+// We can destructure an object directly in the function's parameters!
+function FreelancerRow({ name, occupation, rate }) {
+  const $tr = document.createElement("tr");
+  $tr.innerHTML = `
+    <td>${name}</td>
+    <td>${occupation}</td>
+    <td>$${rate}</td>
+  `;
+  return $tr;
+}
+
 function FreelancerRows() {
-    const tbody = document.createElement('tbody');
-    tbody.id = 'FreelancerRows';
-    
-    freelancers.forEach(freelancer => {
-        tbody.appendChild(Freelancer(freelancer));
-    });
-    
-    return tbody;
+  const $tbody = document.createElement("tbody");
+  const $freelancers = freelancers.map(FreelancerRow);
+  $tbody.replaceChildren(...$freelancers);
+  return $tbody;
 }
 
-// Component for average rate
 function AverageRate() {
-    const averageElement = document.createElement('div');
-    averageElement.className = 'average-rate';
-    averageElement.innerHTML = `
-        <h2>Average Starting Rate: $${averageRate}/hr</h2>
-        <p>Based on ${freelancers.length} freelancers</p>
-    `;
-    return averageElement;
+  const $p = document.createElement("p");
+  // We can use `textContent` instead of `innerHTML` when we just want to
+  // set the text, rather than creating nested HTML elements.
+  // `toFixed(2)` rounds the number to two decimal places.
+  $p.textContent = `The average rate is $${averageRate.toFixed(2)}.`;
+  return $p;
 }
 
-// Main app component
-function App() {
-    const appElement = document.createElement('div');
-    appElement.id = 'app';
-    appElement.innerHTML = `
-        <header>
-            <h1>Freelancer Forum</h1>
-        </header>
-        <main>
-            <section class="average-section"></section>
-            <section class="freelancers-section">
-                <h2>Available Freelancers</h2>
-                <table class="freelancers-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Occupation</th>
-                            <th>Hourly Rate</th>
-                        </tr>
-                    </thead>
-                </table>
-            </section>
-        </main>
-    `;
-    
-    return appElement;
-}
-
-// Render function
+// === Render ===
 function render() {
-    const $app = document.getElementById('app');
-    
-    if (!$app) {
-        // Create app if it doesn't exist
-        const app = App();
-        document.body.appendChild(app);
-    }
-    
-    // Update average rate section
-    const averageSection = document.querySelector('.average-section');
-    if (averageSection) {
-        averageSection.replaceWith(AverageRate());
-    } else {
-        document.querySelector('main').insertBefore(AverageRate(), document.querySelector('.freelancers-section'));
-    }
-    
-    // Update freelancers table
-    const table = document.querySelector('.freelancers-table');
-    if (table) {
-        const existingTbody = table.querySelector('tbody');
-        if (existingTbody) {
-            existingTbody.replaceWith(FreelancerRows());
-        } else {
-            table.appendChild(FreelancerRows());
-        }
-    }
+  const $app = document.querySelector("#app");
+
+  // <table>s eject "fake" elements, which is why we need to use
+  // <tbody id="FreelancerRows"> instead of <FreelancerRows>.
+  // This prevents our component from being forced outside of the table.
+
+  $app.innerHTML = `
+    <h1>Freelancer Forum</h1>
+    <AverageRate></AverageRate>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Occupation</th>
+          <th>Rate</th>
+        </tr>
+      </thead>
+      <tbody id="FreelancerRows"></tbody>
+    </table>
+  `;
+  $app.querySelector("AverageRate").replaceWith(AverageRate());
+  $app.querySelector("#FreelancerRows").replaceWith(FreelancerRows());
 }
 
-// Add some CSS for styling
-const style = document.createElement('style');
-style.textContent = `
-    #app {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    
-    header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    
-    h1 {
-        color: #333;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 10px;
-    }
-    
-    .average-rate {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-        text-align: center;
-        border-left: 4px solid #007bff;
-    }
-    
-    .average-rate h2 {
-        margin: 0;
-        color: #007bff;
-    }
-    
-    .freelancers-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-    
-    .freelancers-table th {
-        background: #007bff;
-        color: white;
-        padding: 12px;
-        text-align: left;
-    }
-    
-    .freelancers-table td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    .freelancers-table tr:hover {
-        background: #f5f5f5;
-    }
-    
-    .rate {
-        color: #28a745;
-        font-weight: bold;
-    }
-    
-    .name {
-        font-weight: bold;
-    }
-    
-    .occupation {
-        color: #666;
-    }
-`;
-document.head.appendChild(style);
-
-// Initial render
 render();
-
-// Optional: Add new freelancers every 5 seconds to demonstrate dynamic updates
-setInterval(() => {
-    freelancers.push(generateFreelancer());
-    averageRate = calculateAverageRate();
-    render();
-}, 5000);
